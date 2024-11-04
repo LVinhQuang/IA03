@@ -21,8 +21,11 @@
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^3.3.0",
     "@nestjs/core": "^10.0.0",
+    "@nestjs/jwt": "^10.2.0",
     "@nestjs/platform-express": "^10.0.0",
+    "@vercel/postgres": "^0.10.0",
     "bcrypt": "^5.1.1",
     "jsonfile": "^6.1.0",
     "reflect-metadata": "^0.2.0",

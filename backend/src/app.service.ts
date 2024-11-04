@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import * as fs from 'fs'
 import * as bcrypt from 'bcrypt'
 import { HttpException, HttpStatus } from '@nestjs/common';
-import path = require('path');
+import { sql } from '@vercel/postgres';
+import { JwtService } from '@nestjs/jwt';
 
 interface User {
   email: string,
@@ -11,41 +11,48 @@ interface User {
 
 @Injectable()
 export class AppService {
+  constructor(private jwtService: JwtService) {}
   getHello(): string {
     return 'Hello World!';
   }
 
   async register(email: string, password: string): Promise<{message: string}> {
-    const filePath = path.resolve(__dirname, '../src/users.JSON')
-    const users: User[] = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    console.log(users);
-    const existingUser = users.find(user => user.email === email);
-    if (existingUser) {
+    // Check if email exists
+    const { rows } = await sql`
+      SELECT * FROM Accounts WHERE email = ${email}
+    `;
+
+    if (rows.length > 0) {
       throw new HttpException('Email đã tồn tại', HttpStatus.CONFLICT);
     }
-    const saltRounds = 10; // Độ mạnh của hash
+
+    const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    users.push({ email, password: hashedPassword });
-    fs.writeFileSync(filePath, JSON.stringify(users), 'utf-8');
+    // Insert new user
+    await sql`
+      INSERT INTO Accounts (email, password)
+      VALUES (${email}, ${hashedPassword})
+    `;
 
     return {message: "Đăng ký thành công"}
   }
 
   async login(email: string, password: string) {
-    const filePath = path.resolve(__dirname, '../src/users.JSON')
-    const users: User[] = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    const { rows } = await sql`
+      SELECT * FROM Accounts WHERE email = ${email}
+    `;
 
-    const user = users.find(user => user.email === email);
-    if (!user) {
+    if (rows.length === 0) {
       throw new HttpException('Email không tồn tại', HttpStatus.NOT_FOUND);
     }
 
+    const user = rows[0];
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       throw new HttpException('Mật khẩu không đúng', HttpStatus.UNAUTHORIZED);
     }
-
-    return {message: "Đăng nhập thành công!"}
+    const payload = { email: user.email };
+    return {accessToken: this.jwtService.sign(payload)}
   }
 }

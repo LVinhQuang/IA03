@@ -6,13 +6,14 @@ import Typography from '@mui/material/Typography'
 import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 import * as yup from 'yup'
-import axios from 'axios'
 import {useNavigate, Link} from 'react-router-dom'
+import { api } from './api'
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate()
 
     const validationSchema = yup.object().shape({
@@ -22,9 +23,11 @@ const Login = () => {
     
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
         try {
             await validationSchema.validate({ email, password });
-            const response = await axios.post('http://localhost:3000/login', { email, password });
+            const response = await api.post('/login', { email, password });
+            localStorage.setItem('token', response.data.accessToken);
             window.alert('Đăng nhập thành công!')
             navigate('/')
         } catch (error) {
@@ -36,6 +39,8 @@ const Login = () => {
             else {
                 setError(error.message)
             }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -63,12 +68,19 @@ const Login = () => {
                         margin="normal"
                     />
                     {error && <p style={{ color: 'red' }}>{error}</p>}
-                    <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: '15px' }}>
-                        Đăng nhập
+                    <Button 
+                        type="submit" 
+                        variant="contained" 
+                        color="primary" 
+                        fullWidth 
+                        sx={{ mt: '15px' }}
+                        disabled={loading}
+                    >
+                        {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                     </Button>
                 </form>
                 <Typography variant='subtitle1' sx={{margin: '5px'}}>Chưa có tài khoản?
-                    <Link to='/user/register'>Đăng ký</Link>
+                    <Link to='/register'>Đăng ký</Link>
                 </Typography>
             </Box>
         </Card>

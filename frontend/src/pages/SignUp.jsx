@@ -6,13 +6,14 @@ import Typography from '@mui/material/Typography'
 import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 import * as yup from 'yup'
-import axios from 'axios'
+import { api } from './api'
 import {useNavigate, Link} from 'react-router-dom'
 
 const SignUp = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate()
 
     const validationSchema = yup.object().shape({
@@ -22,9 +23,10 @@ const SignUp = () => {
     
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
         try {
             await validationSchema.validate({ email, password });
-            const response = await axios.post('http://localhost:3000/user/register', { email, password });
+            const response = await api.post('/register', { email, password });
             window.alert('Đăng ký thành công!')
             navigate('/login')
         } catch (error) {
@@ -36,6 +38,8 @@ const SignUp = () => {
             else {
                 setError(error.message)
             }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -63,8 +67,15 @@ const SignUp = () => {
                         margin="normal"
                     />
                     {error && <p style={{ color: 'red' }}>{error}</p>}
-                    <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: '15px' }}>
-                        Đăng ký
+                    <Button 
+                        type="submit" 
+                        variant="contained" 
+                        color="primary" 
+                        fullWidth 
+                        sx={{ mt: '15px' }}
+                        disabled={loading}
+                    >
+                        {loading ? 'Đang đăng ký...' : 'Đăng ký'}
                     </Button>
                 </form>
                 <Typography variant='subtitle1' sx={{margin: '5px'}}>Đã có tài khoản?

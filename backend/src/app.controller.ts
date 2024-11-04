@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
+import { AuthGuard } from './auth/auth.guard';
 
 interface User {
   email: string,
@@ -13,6 +14,12 @@ export class AppController {
   @Get()
   getHello(): string {
     return this.appService.getHello();
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/profile')
+  getProfile(@Request() req) {
+    return req.user;
   }
 
   @Post('/login')
