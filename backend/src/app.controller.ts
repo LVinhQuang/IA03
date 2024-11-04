@@ -27,7 +27,7 @@ export class AppController {
     return this.appService.login(user.email, user.password)
   }
 
-  @Post('/user/register')
+  @Post('/register')
   register(@Body() user: {email: string, password: string}): Promise<{message: string}> {
     return this.appService.register(user.email, user.password);
   }
